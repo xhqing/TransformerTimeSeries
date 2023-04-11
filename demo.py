@@ -66,12 +66,27 @@ for epoch in range(num_epochs):
     if (epoch + 1) % 10 == 0:
         print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}')
 
+# 保存模型的状态字典
+torch.save(model.state_dict(), "model_checkpoint.pth")
+
+
 # 预测
-model.eval()
+
+# 首先创建一个与之前相同结构的模型
+loaded_model = TransformerTimeSeries(input_dim, model_dim, num_heads, num_layers, output_dim).to(device)
+
+# 加载保存的状态字典
+loaded_model.load_state_dict(torch.load("model_checkpoint.pth"))
+
+# 确保模型处于评估模式，这对于包含dropout或batch normalization的模型非常重要
+loaded_model.eval()
+
+
+loaded_model.eval()
 with torch.no_grad():
     test_inputs = test_data[:, :-1, :].to(device)
     test_targets = test_data[:, 1:, :].cpu().numpy()
-    test_outputs = model(test_inputs).cpu().numpy()
+    test_outputs = loaded_model(test_inputs).cpu().numpy()
 
 # 可视化结果
 sample_idx = 1
